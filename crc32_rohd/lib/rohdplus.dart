@@ -1,11 +1,14 @@
 import 'package:rohd/rohd.dart';
+export 'package:rohd/rohd.dart';
 
+// Add .C() and .L() to int
 extension ConstInt on int {
   Const C([width = 1]) => Const(this, width: width, fill: false);
   LogicValue L([width = 1]) => LogicValue.ofInt(this, width);
 }
 
 class MyPairInterface extends PairInterface {
+  // Enable subclasses to define ports using these functions
   portsFromProvider() => <Logic>[];
   portsFromConsumer() => <Logic>[];
   sharedInputPorts() => <Logic>[];
@@ -46,26 +49,9 @@ class MyPairInterface extends PairInterface {
     PairInterfaceType subInterface, {
     bool reverse = false,
   }) {
+    // Fixup name
     subInterface.modify = (n) => '${name}_$n';
     return super.addSubInterface(name, subInterface, reverse: reverse);
-  }
-
-  Logic pport(String name, [int width = 1]) {
-    try {
-      return super.port(name);
-    } catch (e) {
-      setPorts([Port(name, width)], [PairDirection.fromProvider]);
-      return super.port(name);
-    }
-  }
-
-  Logic cport(String name, [int width = 1]) {
-    try {
-      return super.port(name);
-    } catch (e) {
-      setPorts([Port(name, width)], [PairDirection.fromConsumer]);
-      return super.port(name);
-    }
   }
 
   dynamic sub(String name) {

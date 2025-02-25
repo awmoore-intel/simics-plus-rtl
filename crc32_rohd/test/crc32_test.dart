@@ -6,7 +6,26 @@ import 'package:crc32/crc32.dart';
 import 'package:rohd_vf/rohd_vf.dart';
 import 'package:crc32/rohdplus.dart';
 
-extension MemoryModelTxn on MemoryModel {
+class MemoryModel {
+  // Create a sparse memory
+  Map<int, int> memory = {};
+
+  // Read from memory
+  List<int> read(int addr, int length) {
+    List<int> data = [];
+    for (int i = 0; i < length; i++) {
+      data.add(memory[addr + i] ?? 0);
+    }
+    return data;
+  }
+
+  // Write to memory
+  void write(int addr, List<int> data) {
+    for (int i = 0; i < data.length; i++) {
+      memory[addr + i] = data[i];
+    }
+  }
+
   void init() {
     for (int i = 0; i < 0x200000; i++) memory[i] = i & 0xff;
   }
