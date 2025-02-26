@@ -1,8 +1,35 @@
+import "dart:ffi";
+
+import "package:collection/collection.dart";
+import "package:rohd/rohd.dart" as rohd;
+import "package:rohd_hcl/rohd_hcl.dart" as rohd_hcl;
 import "rohdplus.dart";
 import "interfaces.dart";
 import "crcTable.dart";
+import "dart:mirrors";
 
 enum Crc32State { IDLE, READ, WRITE, RESP }
+
+class Signals {
+  Map<String, Logic> s = {};
+
+  Logic operator [](String key) {
+    return s[key]!;
+  }
+
+  void operator []=(String key, Logic value) {
+    s[key] = value;
+  }
+
+  Signals operator <<(Logic value) {
+    add(value);
+    return this;
+  }
+
+  void add(Logic logic) {
+    s[logic.name] = logic;
+  }
+}
 
 class Crc32 extends Module {
   late final CoreIO io;
@@ -20,16 +47,27 @@ class Crc32 extends Module {
     Logic dstAddr = Logic(name: 'dstAddr', width: 64);
     Logic len = Logic(name: 'len', width: 64);
     Logic crc32Val = Logic(name: 'crc32Val', width: 32);
-    Logic srcAddr_f = Logic(name: 'srcAddr_f', width: 64);
-    Logic dstAddr_f = Logic(name: 'dstAddr_f', width: 64);
-    Logic len_f = Logic(name: 'len_f', width: 64);
-    Logic crc32Val_f = Logic(name: 'crc32Val_f', width: 32);
     Logic crc32ValNext = Logic(name: 'crc32ValNext', width: 32);
 
-    srcAddr_f <= flop(io.clk, srcAddr, reset: io.reset, resetValue: 0.C(64));
-    dstAddr_f <= flop(io.clk, dstAddr, reset: io.reset, resetValue: 0.C(64));
-    len_f <= flop(io.clk, len, reset: io.reset, resetValue: 0.C(64));
-    crc32Val_f <= flop(io.clk, crc32Val, reset: io.reset, resetValue: 0.C(32));
+    Logic srcAddr_f = flop(
+      io.clk,
+      srcAddr,
+      reset: io.reset,
+      resetValue: 0.C(64),
+    );
+    Logic dstAddr_f = flop(
+      io.clk,
+      dstAddr,
+      reset: io.reset,
+      resetValue: 0.C(64),
+    );
+    Logic len_f = flop(io.clk, len, reset: io.reset, resetValue: 0.C(64));
+    Logic crc32Val_f = flop(
+      io.clk,
+      crc32Val,
+      reset: io.reset,
+      resetValue: 0.C(32),
+    );
 
     final defaults = [
       len < len_f,
@@ -116,8 +154,9 @@ class Crc32 extends Module {
     io.busy <= fsm.currentState.neq(Crc32State.IDLE.index);
 
     Logic nLookupIndex = Logic(name: 'nLookupIndex', width: 8);
-
     nLookupIndex <= ((crc32Val_f.slice(7, 0) ^ (io.mem.resp.data.slice(7, 0))));
+
+    Logic(name: "test", width: 32) <= 0.C(32);
 
     Combinational([
       Case(nLookupIndex, [

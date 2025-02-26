@@ -12,6 +12,8 @@ dependencies:
   rohd: ^0.6.1
   rohd_vf: ^0.6.0
   collection: ^1.14.13
+  rohd_hcl:
+    path: ./rohd-hcl
 
 dev_dependencies:
   lints: ^5.0.0
