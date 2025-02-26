@@ -18,15 +18,8 @@ class Command extends MyPairInterface {
         portsFromProvider: [Port('valid'), Port('rs1', 64), Port('rs2', 64)],
       );
 
-  @override
-  init() {
-    valid.inject(0);
-    rs1.inject(0);
-    rs2.inject(0);
-  }
-
   drive(Logic clk, CommandTransaction t) async {
-    //await clk.nextPosedge;
+    await clk.nextPosedge;
     valid.inject(1);
     rs1.inject(0);
     rs2.inject(t.len);
@@ -35,6 +28,23 @@ class Command extends MyPairInterface {
     rs2.inject(t.dstAddr);
     await clk.nextPosedge;
     valid.inject(0);
+    rs1.inject(LogicValue.x);
+    rs2.inject(LogicValue.x);
+  }
+
+  Stream<CommandTransaction> monitor(Logic clk) async* {
+    while (true) {
+      int len = 0;
+      await clk.nextPosedge;
+      if (valid.value.toBool() == true) {
+        print("Valid is true");
+        if (rs1.value.toInt() == 0) {
+          len = rs2.value.toInt();
+        } else {
+          yield CommandTransaction(rs1.value.toInt(), rs2.value.toInt(), len);
+        }
+      }
+    }
   }
 }
 
@@ -63,16 +73,6 @@ class MemReq extends MyPairInterface {
         ],
         portsFromProvider: [Port('ready')],
       );
-
-  @override
-  init() {
-    valid.inject(0);
-    isRead.inject(0);
-    sizeInBytes.inject(0);
-    addr.inject(0);
-    data.inject(0);
-    ready.inject(0);
-  }
 }
 
 class MemResp extends MyPairInterface {
@@ -88,8 +88,6 @@ class MemIO extends MyPairInterface {
     addSubInterface("req", MemReq());
     addSubInterface("resp", MemResp());
   }
-
-  init() {}
 }
 
 class CoreIO extends MyPairInterface {
@@ -119,15 +117,5 @@ class CoreIO extends MyPairInterface {
       await clk.nextPosedge;
     }
     reset.inject(0);
-  }
-
-  init() {
-    clk.inject(0);
-    reset.inject(0);
-    busy.inject(0);
-    cmd.init();
-    resp.init();
-    mem.init();
-    mem.init();
   }
 }

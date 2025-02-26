@@ -108,12 +108,17 @@ class Crc32 extends Module {
               io.mem.req.isRead < 1.C(),
               io.mem.req.addr < srcAddr_f,
               io.mem.req.sizeInBytes < 1.L(64),
-              srcAddr < srcAddr_f + 1.C(64),
-              crc32Val < crc32Val_f ^ crc32ValNext,
               If(
-                len_f.eq(1.C(64)),
-                then: [len < 4.C(64)],
-                orElse: [len < len_f - 1],
+                io.mem.req.valid & io.mem.req.ready,
+                then: [
+                  srcAddr < srcAddr_f + 1.L(64),
+                  crc32Val < crc32Val_f ^ crc32ValNext,
+                  If(
+                    len_f.eq(1.C(64)),
+                    then: [len < 4.C(64)],
+                    orElse: [len < len_f - 1],
+                  ),
+                ],
               ),
             ],
       ),
@@ -155,8 +160,6 @@ class Crc32 extends Module {
 
     Logic nLookupIndex = Logic(name: 'nLookupIndex', width: 8);
     nLookupIndex <= ((crc32Val_f.slice(7, 0) ^ (io.mem.resp.data.slice(7, 0))));
-
-    Logic(name: "test", width: 32) <= 0.C(32);
 
     Combinational([
       Case(nLookupIndex, [

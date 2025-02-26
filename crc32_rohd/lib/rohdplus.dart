@@ -1,10 +1,33 @@
+import 'dart:ffi';
+
 import 'package:rohd/rohd.dart';
+import 'package:rohd_hcl/rohd_hcl.dart';
 export 'package:rohd/rohd.dart';
 
 // Add .C() and .L() to int
 extension ConstInt on int {
   Const C([width = 1]) => Const(this, width: width, fill: false);
   LogicValue L([width = 1]) => LogicValue.ofInt(this, width);
+}
+
+extension InitPairInterface on PairInterface {
+  void initProvider([int value = 0]) {
+    for (Logic p in getPorts({PairDirection.fromProvider}).values) {
+      p.inject(value);
+    }
+    for (var s in subInterfaces.values) {
+      s.initProvider();
+    }
+  }
+
+  void initConsumer([int value = 0]) {
+    for (Logic p in getPorts({PairDirection.fromConsumer}).values) {
+      p.inject(value);
+    }
+    for (var s in subInterfaces.values) {
+      s.initConsumer();
+    }
+  }
 }
 
 class MyPairInterface extends PairInterface {
@@ -31,18 +54,6 @@ class MyPairInterface extends PairInterface {
     setPorts(this.commonInOutPorts(), [PairDirection.commonInOuts]);
   }
 
-  // Allows for dynamic getter for ports
-  late dynamic p = this;
-
-  @override
-  noSuchMethod(Invocation invocation) {
-    var member = invocation.memberName.toString();
-    member = member.replaceAll(RegExp(r'Symbol\("|"\)'), ''); // Extract name
-    if (invocation.isGetter && member == "p") return this;
-    if (invocation.isGetter) return port(member);
-    return super.noSuchMethod(invocation); // Will throw.
-  }
-
   @override
   PairInterfaceType addSubInterface<PairInterfaceType extends PairInterface>(
     String name,
@@ -57,6 +68,4 @@ class MyPairInterface extends PairInterface {
   dynamic sub(String name) {
     return super.subInterfaces[name];
   }
-
-  init() {}
 }
