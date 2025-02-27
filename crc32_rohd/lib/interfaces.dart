@@ -10,22 +10,29 @@ class CommandTransaction {
 
 class Command extends MyPairInterface {
   Logic get valid => port('valid');
-  Logic get rs1 => port('rs1');
-  Logic get rs2 => port('rs2');
+  Logic get rs1 => port('bits_rs1');
+  Logic get rs2 => port('bits_rs2');
 
   Command()
     : super(
-        portsFromProvider: [Port('valid'), Port('rs1', 64), Port('rs2', 64)],
+        portsFromProvider: [
+          Port('valid'),
+          Port('bits_rs1', 64),
+          Port('bits_rs2', 64),
+        ],
       );
 
   drive(Logic clk, CommandTransaction t) async {
     await clk.nextPosedge;
     valid.inject(1);
-    rs1.inject(0);
-    rs2.inject(t.len);
-    await clk.nextPosedge;
     rs1.inject(t.srcAddr);
     rs2.inject(t.dstAddr);
+    await clk.nextPosedge;
+    valid.inject(0);
+    await clk.nextPosedge;
+    valid.inject(1);
+    rs1.inject(0);
+    rs2.inject(t.len);
     await clk.nextPosedge;
     valid.inject(0);
     rs1.inject(LogicValue.x);
@@ -50,26 +57,26 @@ class Command extends MyPairInterface {
 
 class Response extends MyPairInterface {
   Logic get valid => port('valid');
-  Logic get data => port('data');
+  Logic get data => port('bits_data');
 
-  Response() : super(portsFromConsumer: [Port('valid'), Port('data', 32)]);
+  Response() : super(portsFromConsumer: [Port('valid'), Port('bits_data', 64)]);
 }
 
 class MemReq extends MyPairInterface {
   Logic get valid => port('valid');
-  Logic get isRead => port('is_read');
-  Logic get sizeInBytes => port('size_in_bytes');
-  Logic get addr => port('addr');
-  Logic get data => port('data');
+  Logic get isRead => port('bits_is_read');
+  Logic get sizeInBytes => port('bits_size_in_bytes');
+  Logic get addr => port('bits_addr');
+  Logic get data => port('bits_data');
   Logic get ready => port('ready');
   MemReq()
     : super(
         portsFromConsumer: [
           Port('valid'),
-          Port('is_read'),
-          Port('size_in_bytes', 64),
-          Port('addr', 64),
-          Port('data', 32),
+          Port('bits_is_read'),
+          Port('bits_size_in_bytes', 4),
+          Port('bits_addr', 64),
+          Port('bits_data', 64),
         ],
         portsFromProvider: [Port('ready')],
       );
@@ -77,8 +84,9 @@ class MemReq extends MyPairInterface {
 
 class MemResp extends MyPairInterface {
   Logic get valid => port('valid');
-  Logic get data => port('data');
-  MemResp() : super(portsFromProvider: [Port('valid'), Port('data', 64)]) {}
+  Logic get data => port('bits_data');
+  MemResp()
+    : super(portsFromProvider: [Port('valid'), Port('bits_data', 64)]) {}
 }
 
 class MemIO extends MyPairInterface {
@@ -91,22 +99,22 @@ class MemIO extends MyPairInterface {
 }
 
 class CoreIO extends MyPairInterface {
-  Logic get clk => port('clk');
+  Logic get clk => port('clock');
   Logic get reset => port('reset');
-  Logic get busy => port('busy');
+  Logic get busy => port('io_busy');
 
-  Command get cmd => super.sub('cmd');
-  Response get resp => super.sub('resp');
-  MemIO get mem => super.sub('mem');
+  Command get cmd => super.sub('io_cmd');
+  Response get resp => super.sub('io_resp');
+  MemIO get mem => super.sub('io_mem');
 
   CoreIO()
     : super(
-        portsFromConsumer: [Port('busy')],
-        portsFromProvider: [Port('clk'), Port('reset')],
+        portsFromConsumer: [Port('io_busy')],
+        portsFromProvider: [Port('clock'), Port('reset')],
       ) {
-    addSubInterface("cmd", Command());
-    addSubInterface("mem", MemIO());
-    addSubInterface("resp", Response());
+    addSubInterface("io_cmd", Command());
+    addSubInterface("io_mem", MemIO());
+    addSubInterface("io_resp", Response());
   }
 
   CoreIO.clone(CoreIO otherInterface) : this();
