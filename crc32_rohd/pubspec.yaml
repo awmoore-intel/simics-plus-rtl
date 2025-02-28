@@ -13,7 +13,7 @@ dependencies:
   rohd_vf: ^0.6.0
   collection: ^1.14.13
   rohd_hcl:
-    path: ./rohd-hcl
+    git: https://github.com/intel/rohd-hcl.git
   logging: ^1.3.0
 
 dev_dependencies:

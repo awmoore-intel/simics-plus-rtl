@@ -38,20 +38,15 @@ class MyPairInterface extends PairInterface {
   commonInOutPorts() => <Logic>[];
 
   MyPairInterface({
-    List<Logic>? portsFromConsumer,
-    List<Logic>? portsFromProvider,
-    List<Logic>? sharedInputPorts,
-    List<Logic>? commonInOutPorts,
-  }) : super(
-         portsFromConsumer: portsFromConsumer,
-         portsFromProvider: portsFromProvider,
-         sharedInputPorts: sharedInputPorts,
-         commonInOutPorts: commonInOutPorts,
-       ) {
-    setPorts(this.portsFromProvider(), [PairDirection.fromProvider]);
-    setPorts(this.portsFromConsumer(), [PairDirection.fromConsumer]);
-    setPorts(this.sharedInputPorts(), [PairDirection.sharedInputs]);
-    setPorts(this.commonInOutPorts(), [PairDirection.commonInOuts]);
+    super.portsFromConsumer,
+    super.portsFromProvider,
+    super.sharedInputPorts,
+    super.commonInOutPorts,
+  }) {
+    setPorts(portsFromProvider(), [PairDirection.fromProvider]);
+    setPorts(portsFromConsumer(), [PairDirection.fromConsumer]);
+    setPorts(sharedInputPorts(), [PairDirection.sharedInputs]);
+    setPorts(commonInOutPorts(), [PairDirection.commonInOuts]);
   }
 
   @override
