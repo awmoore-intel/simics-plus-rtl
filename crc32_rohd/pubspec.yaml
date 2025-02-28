@@ -1,5 +1,5 @@
-name: rohd_pta 
-description: Programmable Transport Architecture in ROHD
+name: crc32
+description: Crc32 Engine
 version: 1.0.0
 publish_to: none
 # repository: https://github.com/my_org/my_repo
