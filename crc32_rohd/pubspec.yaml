@@ -1,5 +1,5 @@
-name: crc32 
-description: A sample command-line application.
+name: rohd_pta 
+description: Programmable Transport Architecture in ROHD
 version: 1.0.0
 publish_to: none
 # repository: https://github.com/my_org/my_repo
