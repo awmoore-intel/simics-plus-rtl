@@ -24,11 +24,11 @@ class Crc32 extends Module {
     // Define logic here, including state transitions and memory handling
     io = CoreIO.clone(inio)..pairConnectIO(this, inio, PairRole.consumer);
 
-    rtl();
+    _rtl();
   }
 
   // Add logic
-  void rtl() {
+  void _rtl() {
     Logic srcAddr = Logic(name: 'srcAddr', width: 64);
     Logic dstAddr = Logic(name: 'dstAddr', width: 64);
     Logic len = Logic(name: 'len', width: 64);
