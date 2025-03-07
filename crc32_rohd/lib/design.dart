@@ -1,12 +1,6 @@
-import "dart:ffi";
-
-import "package:collection/collection.dart";
-import "package:rohd/rohd.dart" as rohd;
-import "package:rohd_hcl/rohd_hcl.dart" as rohd_hcl;
 import "rohdplus.dart";
 import "interfaces.dart";
 import "crcTable.dart";
-import "dart:mirrors";
 
 enum Crc32State { IDLE, READ, WRITE, RESP }
 

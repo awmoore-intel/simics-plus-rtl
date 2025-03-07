@@ -85,8 +85,7 @@ class MemReq extends MyPairInterface {
 class MemResp extends MyPairInterface {
   Logic get valid => port('valid');
   Logic get data => port('bits_data');
-  MemResp()
-    : super(portsFromProvider: [Port('valid'), Port('bits_data', 64)]) {}
+  MemResp() : super(portsFromProvider: [Port('valid'), Port('bits_data', 64)]);
 }
 
 class MemIO extends MyPairInterface {

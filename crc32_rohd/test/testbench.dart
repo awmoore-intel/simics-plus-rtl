@@ -34,7 +34,9 @@ class MemoryModel {
   }
 
   void init() {
-    for (int i = 0; i < 0x200000; i++) memory[i] = i & 0xff;
+    for (int i = 0; i < 0x200000; i++) {
+      memory[i] = i & 0xff;
+    }
     Logger.root.info("[MEM] Initialized memory");
   }
 
