@@ -1,0 +1,21 @@
+name: crc32
+description: Crc32 Engine
+version: 1.0.0
+publish_to: none
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.7.0
+
+# Add regular dependencies here.
+dependencies:
+  rohd: ^0.6.1
+  rohd_vf: ^0.6.0
+  collection: ^1.14.13
+  rohd_hcl:
+    git: https://github.com/intel/rohd-hcl.git
+  logging: ^1.3.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0
