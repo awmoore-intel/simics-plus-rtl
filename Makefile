@@ -33,7 +33,7 @@ BASEDIR = $(shell pwd)
 ifeq (, $(VERILATOR_INC_DIR))
     ifeq (, $(wildcard /usr/local/share/verilator/include/*))
         ifeq (, $(wildcard /usr/share/verilator/include/*))
-            $(error "Verilator include directory is not set properly")
+            #$(error "Verilator include directory is not set properly")
         else
             VERILATOR_INC_DIR := /usr/share/verilator/include
         endif
@@ -136,3 +136,22 @@ clean:
 	rm -rf $(BASEDIR)/$(BUILD_NAME)
 	rm -rf $(BASEDIR)/$(OBJ)
 	rm -rf $(BASEDIR)/lib
+
+vcs: libcrc.so
+
+simv: Crc32.sv
+	vcs -full64 -sverilog -debug_all Crc32.sv -o simv
+
+libcrc.so: Crc32.sv
+	vcs -full64 -slave -e vcs_main -sverilog -debug_all Crc32.sv -o libcrc.so
+
+vcsmain: libcrc.so vcsmain.c
+	gcc vcsmain.c -o vcsmain -I$$VCS_HOME/include \
+		-L. -Wl,-rpath,. -lcrc $$VCS_HOME/linux64/lib/vcs_tls.o \
+		-L$$VCS_HOME/linux64/lib -lvcsnew -Wl,-rpath,$$VCS_HOME/linux64/lib
+
+run: libcrc.so vcsmain
+	./vcsmain -ucli -do run.do
+
+waves:
+	dve -vpd inter.vpd
