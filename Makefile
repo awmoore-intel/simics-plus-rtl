@@ -146,5 +146,8 @@ libcrc.so: Crc32.sv
 	   -timescale=1ns/1ps \
 	   +vpi -P pli.tab 
 
+run:
+	bash -c "LD_PRELOAD=./vcs_tls.so:./libcrc.so ./simics_project/simics simics_project/modules/crc32_pcie_dml/test/s-crc32-pcie-dml.py"
+
 waves:
 	dve -vpd inter.vpd
