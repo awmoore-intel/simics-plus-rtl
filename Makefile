@@ -13,7 +13,7 @@ LIBNAME = lib$(APPNAME)
 SHARED_LIB = lib/$(LIBNAME).so
 
 # Generate a vcd trace during simulation
-USE_TRACE = 1
+USE_TRACE = 0
 # Easier debugging with gdb
 DEBUG = 1
 # track coverage of Verilated code
@@ -45,11 +45,10 @@ endif
 # includes
 INCLUDES += -I/usr/include/
 INCLUDES += -I./
-INCLUDES += -I${verilator_build_dir}
-INCLUDES += -isystem${VERILATOR_INC_DIR}/vltstd -isystem${VERILATOR_INC_DIR}
-INCLUDES += -isystem/$(SIMICS_BASE)/src/devices/c++-api -DDISABLE_WARNING_ON_TECH_PREVIEW
-INCLUDES += -isystem/$(SIMICS_BASE)/src/include
-INCLUDES += -isystem/$(SIMICS_BASE)/linux64/api/7
+INCLUDES += -Isystem/$(SIMICS_BASE)/src/include/
+INCLUDES += -Isystem/$(SIMICS_BASE)/src/devices/c++-api
+INCLUDES += -Isystem/$(SIMICS_BASE)/linux64/api/7
+
 
 CXXFLAGS = -faligned-new
 LIB_OBJECTS = $(OBJ)/harness_${CHISEL_TOP_PACKAGE}_${CHISEL_TOP_NAME}.o
@@ -121,15 +120,15 @@ $(verilator_build_dir)/%.o: $(VERILATOR_INC_DIR)/%.cpp
 	$(CXX) -fPIC $(verilator_cxx_flags) -c $< -o $@
 
 $(OBJ)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $*.cpp
+	$(CXX) -o $@ -c $*.cpp $(CXXFLAGS) -I$$VCS_HOME/include 
 
 init:
 	@mkdir -p $(BASEDIR)/lib
 	@mkdir -p $(BASEDIR)/$(OBJ)
 	@mkdir -p $(BASEDIR)/$(BUILD_NAME)
 
-shared: init $(lib_path) $(verilated_objs) $(LIB_OBJECTS)
-	$(CXX) $(LDFLAGS) -shared -o $(SHARED_LIB) $(LIB_OBJECTS) $(lib_path) $(verilated_objs)
+shared: init  $(LIB_OBJECTS)
+	$(CXX) $(LDFLAGS)  -Wl,-rpath,$(PWD) -shared -o $(SHARED_LIB) $(LIB_OBJECTS) -L. -lcrc
 
 clean:
 	rm -rf $(BASEDIR)/target $(BASEDIR)/project $(BASEDIR)/test_run_dir
@@ -143,15 +142,9 @@ simv: Crc32.sv
 	vcs -full64 -sverilog -debug_all Crc32.sv -o simv
 
 libcrc.so: Crc32.sv
-	vcs -full64 -slave -e vcs_main -sverilog -debug_all Crc32.sv -o libcrc.so
-
-vcsmain: libcrc.so vcsmain.c
-	gcc vcsmain.c -o vcsmain -I$$VCS_HOME/include \
-		-L. -Wl,-rpath,. -lcrc $$VCS_HOME/linux64/lib/vcs_tls.o \
-		-L$$VCS_HOME/linux64/lib -lvcsnew -Wl,-rpath,$$VCS_HOME/linux64/lib
-
-run: libcrc.so vcsmain
-	./vcsmain -ucli -do run.do
+	vcs -full64 -slave -e vcs_main -sverilog -debug_all Crc32.sv -o libcrc.so -CFLAGS "-g -fPIC" \
+	   -timescale=1ns/1ps \
+	   +vpi -P pli.tab 
 
 waves:
 	dve -vpd inter.vpd

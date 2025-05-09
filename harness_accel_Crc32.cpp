@@ -1,4 +1,5 @@
 
+#include <vpi_user.h>
 #include <cstdint>
 #include <cassert>
 #include <string>
@@ -11,17 +12,125 @@
 // C-based forward declaration to allow DML to call into this harness
 extern "C" {
     #include "harness.h"
+
+const interface_t* aSIM_get_interface(const conf_object_t * o, const char *name) {
+    o = o;
+    name = name;
+    return NULL;
+}
 }
 
+
+class VerilogSignal {
+private:
+    std::string _name;
+    int _value;
+    vpiHandle _handle;
+
+
+public:
+    VerilogSignal(std::string name, int value = 0) : _name(name), _value(value) {
+
+    _handle = vpi_handle_by_name((PLI_BYTE8*)name.c_str(), 0);
+    }
+
+    // Read access
+    operator int() {
+        std::cout << "Reading " << _name <<" value: " << _value << std::endl;
+
+        s_vpi_value value_s = {vpiIntVal, {NULL}};
+
+        vpi_get_value(_handle, &value_s);
+
+        _value = value_s.value.integer;
+        return _value;
+    }
+
+    // Write access
+    VerilogSignal& operator=(uint64_t value) {
+        std::cout << "Setting " << _name <<" value to: " << value << std::endl;
+        _value = value;
+        s_vpi_value var_value;
+        var_value.format = vpiIntVal;
+        var_value.value.integer = value;
+
+        vpi_put_value(_handle, &var_value, NULL, vpiNoDelay);
+        var_value = var_value;
+        return *this;
+    }
+};
+
+#define SIGNAL(name) VerilogSignal name
+#define SIGNALI(name) name("Crc32." #name)
+
+class VCrc32 {
+    public:
+    SIGNAL(io_cmd_bits_rs1);
+    SIGNAL(io_cmd_bits_rs2);
+    SIGNAL(io_cmd_valid);
+    SIGNAL(io_mem_req_ready);
+    SIGNAL(io_mem_resp_valid);
+    SIGNAL(io_mem_req_valid);
+    SIGNAL(io_mem_req_bits_addr);
+    SIGNAL(io_mem_req_bits_size_in_bytes);
+    SIGNAL(io_mem_req_bits_is_read);
+    SIGNAL(io_mem_req_bits_data);
+    SIGNAL(io_mem_resp_bits_data);
+    SIGNAL(io_resp_bits_data);
+    SIGNAL(io_resp_valid);
+    SIGNAL(reset);
+    SIGNAL(clock);
+    VCrc32() : 
+    SIGNALI(io_cmd_bits_rs1),
+    SIGNALI(io_cmd_bits_rs2),
+    SIGNALI(io_cmd_valid),
+    SIGNALI(io_mem_req_ready),
+    SIGNALI(io_mem_resp_valid),
+    SIGNALI(io_mem_req_valid),
+    SIGNALI(io_mem_req_bits_addr),
+    SIGNALI(io_mem_req_bits_size_in_bytes),
+    SIGNALI(io_mem_req_bits_is_read),
+    SIGNALI(io_mem_req_bits_data),
+    SIGNALI(io_mem_resp_bits_data),
+    SIGNALI(io_resp_bits_data),
+    SIGNALI(io_resp_valid),
+    SIGNALI(reset),
+    SIGNALI(clock)
+     {}
+    void eval() {}
+    void final() {
+        vpi_control(vpiFinish,0);
+    }
+};
+
+extern "C" void VcsSimUntil(long *t);
+
+class VerilatedContext {
+    public:
+    void timeInc(int inc) {
+        // Simulate time increment
+
+        static long int t = 0;
+
+        // Get the current simulation time
+        //vpi_get_time(_handle, &current_time);
+        std::cout << "Current simulation time: " << t << std::endl;
+
+        // Print the current simulation time
+        t += inc;
+        
+        std::cout << "Next simulation time: " << t << std::endl;
+        VcsSimUntil(&t);
+    }
+
+};
+
 // verilated RTL design-under-test
-#include "verilated_vcd_c.h"
-class VerilatedVcdC;
-#include "VCrc32.h"
-#if USE_TRACE==1
-VerilatedVcdC * tfd = NULL; // trace file descriptor
-#endif
+//#include "verilated_vcd_c.h"
+//class VerilatedVcdC;
+//#include "VCrc32.h"
 static VerilatedContext * contextp = NULL;
-static VCrc32 * dut = NULL;
+static VCrc32* dut = NULL;
 
 std::string test_name;
 #define VERBOSE (1)
@@ -56,23 +165,26 @@ void step(const uint64_t cycles = 1) {
         #endif
         cycle_count++;
     }
+    vpi_flush();
+    //vpi_control(vpiStop,0);
+    vpi_mcd_flush(0);
 }
 
+extern "C" int rtl_init(const char* name);
+extern "C" void rtl_finish();
+extern "C" int vcs_main(int argc, const char* const* argv);
+extern "C" void VcsInit();
+
 int rtl_init(const char* name) {
-    contextp = new VerilatedContext();
-    contextp->debug(0);
-    contextp->randReset(2);
-    test_name = name;
-    #if USE_TRACE == 1
-    contextp->traceEverOn(true);
-    tfd = new VerilatedVcdC;
-    #endif
-    dut = new VCrc32(contextp, test_name.c_str());
+
+    const char *const argv[] = {"libcrc.so", "-ucli", "-do", "run.do"};
+    int argc = 4;
+    vcs_main(argc, argv);
+    // Initialize VCS
+    VcsInit();
+
+    dut = new VCrc32();
     assert(dut);
-    #if USE_TRACE == 1
-    dut->trace(tfd, 99);
-    tfd->open((test_name + std::string(".vcd")).c_str());
-    #endif
     cycle_count = 0;
 
     dut->reset = 1;
@@ -88,6 +200,9 @@ int rtl_init(const char* name) {
     std::cout << " with VCD trace: " << test_name + std::string(".vcd");
     #endif
     std::cout << std::endl;
+
+    atexit(rtl_finish);
+
     return 0;
 }
 
@@ -133,7 +248,13 @@ void crc32_rtl(uint64_t src1, uint64_t src2) {
     dut->io_cmd_valid = false; // invalid command
     dut->io_mem_req_ready = true; // always ready to handle memory transactions
 
+    int timeout = 1000;
     while (!dut->io_resp_valid) {
+        if (timeout -- < 0) {
+            std::cerr << "[Harness] Timeout waiting for response" << std::endl;
+            break;
+        }
+        
         if (VERBOSE) std::cout << "[Harness] Step at cycle: " << cycle_count << std::endl;
         dut->io_mem_resp_valid = false; // no response by default
 
