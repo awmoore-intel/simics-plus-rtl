@@ -138,11 +138,14 @@ clean:
 
 vcs: libcrc.so
 
+vcs_tls.so: $(VCS_HOME)/linux64/lib/vcs_tls.o
+	ld -shared -o vcs_tls.so $^
+
 simv: Crc32.sv
 	vcs -full64 -sverilog -debug_all Crc32.sv -o simv
 
 libcrc.so: Crc32.sv
-	vcs -full64 -slave -e vcs_main -sverilog -debug_all Crc32.sv -o libcrc.so -CFLAGS "-g -fPIC" \
+	vcs -full64 -slave -e vcs_main -sverilog -debug_all Crc32.sv -o libcrc.so \
 	   -timescale=1ns/1ps \
 	   +vpi -P pli.tab 
 
