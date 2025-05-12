@@ -13,13 +13,6 @@
 extern "C" {
     #include "harness.h"
 
-const interface_t* aSIM_get_interface(const conf_object_t * o, const char *name) {
-    o = o;
-    name = name;
-    return NULL;
-}
-}
-
 
 class VerilogSignal {
 private:
@@ -30,8 +23,7 @@ private:
 
 public:
     VerilogSignal(std::string name, int value = 0) : _name(name), _value(value) {
-
-    _handle = vpi_handle_by_name((PLI_BYTE8*)name.c_str(), 0);
+        _handle = vpi_handle_by_name((PLI_BYTE8*)name.c_str(), 0);
     }
 
     // Read access
@@ -65,42 +57,41 @@ public:
 
 class VCrc32 {
     public:
-    SIGNAL(io_cmd_bits_rs1);
-    SIGNAL(io_cmd_bits_rs2);
-    SIGNAL(io_cmd_valid);
-    SIGNAL(io_mem_req_ready);
-    SIGNAL(io_mem_resp_valid);
-    SIGNAL(io_mem_req_valid);
-    SIGNAL(io_mem_req_bits_addr);
-    SIGNAL(io_mem_req_bits_size_in_bytes);
-    SIGNAL(io_mem_req_bits_is_read);
-    SIGNAL(io_mem_req_bits_data);
-    SIGNAL(io_mem_resp_bits_data);
-    SIGNAL(io_resp_bits_data);
-    SIGNAL(io_resp_valid);
-    SIGNAL(reset);
-    SIGNAL(clock);
-    VCrc32() : 
-    SIGNALI(io_cmd_bits_rs1),
-    SIGNALI(io_cmd_bits_rs2),
-    SIGNALI(io_cmd_valid),
-    SIGNALI(io_mem_req_ready),
-    SIGNALI(io_mem_resp_valid),
-    SIGNALI(io_mem_req_valid),
-    SIGNALI(io_mem_req_bits_addr),
-    SIGNALI(io_mem_req_bits_size_in_bytes),
-    SIGNALI(io_mem_req_bits_is_read),
-    SIGNALI(io_mem_req_bits_data),
-    SIGNALI(io_mem_resp_bits_data),
-    SIGNALI(io_resp_bits_data),
-    SIGNALI(io_resp_valid),
-    SIGNALI(reset),
-    SIGNALI(clock)
-     {}
-    void eval() {}
-    void final() {
-        vpi_control(vpiFinish,0);
-    }
+        SIGNAL(io_cmd_bits_rs1);
+        SIGNAL(io_cmd_bits_rs2);
+        SIGNAL(io_cmd_valid);
+        SIGNAL(io_mem_req_ready);
+        SIGNAL(io_mem_resp_valid);
+        SIGNAL(io_mem_req_valid);
+        SIGNAL(io_mem_req_bits_addr);
+        SIGNAL(io_mem_req_bits_size_in_bytes);
+        SIGNAL(io_mem_req_bits_is_read);
+        SIGNAL(io_mem_req_bits_data);
+        SIGNAL(io_mem_resp_bits_data);
+        SIGNAL(io_resp_bits_data);
+        SIGNAL(io_resp_valid);
+        SIGNAL(reset);
+        SIGNAL(clock);
+        VCrc32() : 
+            SIGNALI(io_cmd_bits_rs1),
+            SIGNALI(io_cmd_bits_rs2),
+            SIGNALI(io_cmd_valid),
+            SIGNALI(io_mem_req_ready),
+            SIGNALI(io_mem_resp_valid),
+            SIGNALI(io_mem_req_valid),
+            SIGNALI(io_mem_req_bits_addr),
+            SIGNALI(io_mem_req_bits_size_in_bytes),
+            SIGNALI(io_mem_req_bits_is_read),
+            SIGNALI(io_mem_req_bits_data),
+            SIGNALI(io_mem_resp_bits_data),
+            SIGNALI(io_resp_bits_data),
+            SIGNALI(io_resp_valid),
+            SIGNALI(reset),
+            SIGNALI(clock) {}
+        void eval() {}
+        void final() {
+            vpi_control(vpiFinish,0);
+        }
 };
 
 extern "C" void VcsSimUntil(long *t);

@@ -2,7 +2,7 @@
 #define SIMICS_PCI_MEMORY_HPP
 
 // simics API for memory access
-#include <simics/devs/memory-space.h>
+#include <simics/c++/devs/memory-space.h>
 
 static conf_object_t * device = NULL;
 static conf_object_t * memory_space = NULL;
@@ -20,10 +20,8 @@ int setup_pci_interface(conf_object_t * _device, conf_object_t * _memory_space) 
 }
 
 uint64_t rtl_memory_read(uint64_t src_addr, uint64_t len) {
-    src_addr = src_addr;
-    len = len;
-    //assert (device != NULL && memory_space != NULL && mifc != NULL);
-    //assert (len == 1 || len == 2 || len == 4 || len == 8);
+    assert (device != NULL && memory_space != NULL && mifc != NULL);
+    assert (len == 1 || len == 2 || len == 4 || len == 8);
     uint64_t dst = 0;
     exception_type_t ret = mifc->access_simple(memory_space, device, src_addr, (uint8_t *) &dst, len, Sim_RW_Read, Sim_Endian_Target);
     assert(ret == Sim_PE_No_Exception);
@@ -31,11 +29,8 @@ uint64_t rtl_memory_read(uint64_t src_addr, uint64_t len) {
 }
 
 void rtl_memory_write(uint64_t dst_addr, uint64_t len, uint64_t src) {
-    dst_addr = dst_addr;
-    len = len;
-    src = src;
-   // assert (device != NULL && memory_space != NULL && mifc != NULL);
-   // assert (len == 1 || len == 2 || len == 4 || len == 8);
+    assert (device != NULL && memory_space != NULL && mifc != NULL);
+    assert (len == 1 || len == 2 || len == 4 || len == 8);
     exception_type_t ret = mifc->access_simple(memory_space, device, dst_addr, (uint8_t *) &src, len, Sim_RW_Write, Sim_Endian_Target);
     assert(ret == Sim_PE_No_Exception);
 }
